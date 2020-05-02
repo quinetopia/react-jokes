@@ -30,7 +30,6 @@ function JokeList({ numJokesToGet = 5 }) {
           console.log("duplicate found!");
         }
       }
-
       setJokes(newJokes);
       setIsLoading(false);
     } catch (err) {
@@ -38,9 +37,36 @@ function JokeList({ numJokesToGet = 5 }) {
     }
   }, [numJokesToGet])
 
+  async function getSavedJokes(){
+    let savedJokes = [];
+    let savedJokeId = '';
+    let savedJokeVote = '';
+    for(let i = 0; i < numJokesToGet; i++){
+      [savedJokeId, savedJokeVote] = window.localStorage.getItem(`votedJokes${i}`).split(' ');
+      let res = await axios.get(`https://icanhazdadjoke.com/j/${savedJokeId}`);
+      let { ...joke } = res.data;
+      savedJokes.push({...joke, votes: Number(savedJokeVote)})
+    }
+    setJokes(savedJokes);
+    setIsLoading(false);
+  }
+
   useEffect(() => {
-    getJokes();
+    if(window.localStorage.getItem('votedJokes0')){
+      getSavedJokes()
+    }else{
+      getJokes();
+    }
   }, [getJokes])
+
+  useEffect(()=> {
+    jokes.forEach((joke, i) => {
+     let savedJoke = `${joke.id} ${joke.votes}`;
+      window.localStorage.setItem(`votedJokes${i}`, savedJoke);
+    })
+    // console.log(jokes);
+  },[jokes])
+
 
   function generateNewJokes() {
     setIsLoading(true);
